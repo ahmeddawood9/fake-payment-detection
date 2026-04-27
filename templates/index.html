@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake Screenshot Detector - University Café</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --warning: #ca8a04;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            padding: 2rem 0;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        main {
+            max-width: 800px;
+            width: 90%;
+            padding: 2rem;
+            margin-top: -2rem;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.75rem;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background-color: #eff6ff;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 1rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #result {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .report {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .verdict {
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+
+        .score-bar {
+            height: 0.5rem;
+            background-color: #e2e8f0;
+            border-radius: 0.25rem;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        .detail-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Fake Screenshot Detector</h1>
+        <p>University Café Payment Verification System</p>
+    </header>
+
+    <main>
+        <div class="card">
+            <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <p>Click or drag and drop to upload screenshot</p>
+                <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+                <img id="preview" class="preview-img">
+            </div>
+            
+            <button id="analyzeBtn" class="btn" onclick="uploadImage()" disabled>Analyze Screenshot</button>
+
+            <div class="loading" id="loader">
+                <div class="spinner"></div>
+                <p>Analyzing patterns and OCR data...</p>
+            </div>
+
+            <div id="result">
+                <div class="report">
+                    <div class="report-header">
+                        <span class="verdict" id="resVerdict"></span>
+                        <span id="resScore"></span>
+                    </div>
+                    
+                    <div class="score-bar">
+                        <div class="score-fill" id="scoreFill"></div>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">Detected App</span>
+                        <span id="resApp"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Amount</span>
+                        <span id="resAmount"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Transaction ID</span>
+                        <span id="resId"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">System Note</span>
+                        <span id="resMsg"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const preview = document.getElementById('preview');
+        const loader = document.getElementById('loader');
+        const resultDiv = document.getElementById('result');
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    analyzeBtn.disabled = false;
+                    resultDiv.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function uploadImage() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            analyzeBtn.disabled = true;
+            loader.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                displayResult(data);
+            } catch (error) {
+                alert('Error analyzing image');
+                console.error(error);
+            } finally {
+                loader.style.display = 'none';
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        function displayResult(data) {
+            resultDiv.style.display = 'block';
+            
+            const verdict = document.getElementById('resVerdict');
+            verdict.innerText = data.verdict;
+            
+            if (data.verdict.includes('REAL')) {
+                verdict.style.color = 'var(--success)';
+            } else if (data.verdict.includes('DUPLICATE')) {
+                verdict.style.color = 'var(--danger)';
+            } else {
+                verdict.style.color = 'var(--warning)';
+            }
+
+            document.getElementById('resScore').innerText = `${data.score.toFixed(1)}% Fraud Prob.`;
+            document.getElementById('resApp').innerText = data.app;
+            document.getElementById('resAmount').innerText = `Rs ${data.amount}`;
+            document.getElementById('resId').innerText = data.tx_id;
+            document.getElementById('resMsg').innerText = data.msg;
+
+            const scoreFill = document.getElementById('scoreFill');
+            scoreFill.style.width = `${data.score}%`;
+            scoreFill.style.backgroundColor = data.score > 60 ? 'var(--danger)' : (data.score > 30 ? 'var(--warning)' : 'var(--success)');
+        }
+
+        // Drag and drop handling
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--primary)';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '#cbd5e1';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#cbd5e1';
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files;
+                handleFileSelect({ target: { files } });
+            }
+        });
+    </script>
+</body>
+</html>
