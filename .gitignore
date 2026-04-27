@@ -1,0 +1,26 @@
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs
+.vscode/
+.idea/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Project specific
+uploads/*
+!uploads/.gitkeep
+Payment_screenshots.zip
+*.log
+
+# Transaction history (optional: ignore if you want users to start fresh)
+# transaction_history.json
