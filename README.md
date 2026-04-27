@@ -1,7 +1,6 @@
 # Fake Financial Screenshot Detector (Pakistani Banks & Payment Apps)
 
-This project detects **fake payment screenshots** shown by students in a **university café**, using **AI + OCR**.  
-It supports screenshots from **Pakistani banks and payment apps** such as:
+This project is a general-purpose tool to detect **fake payment screenshots** using **AI + OCR**. While the original motivation was to identify fraudulent screenshots shown at a **university café**, the system is designed to work broadly for various **Pakistani banks and payment apps** such as:
 
 - EasyPaisa
 - JazzCash
@@ -17,8 +16,7 @@ The system checks if a screenshot is **real** or **fake** and outputs a **fraud 
 
 ## 🎯 Problem
 
-Students sometimes show **edited or fake payment screenshots** to staff in cafés.  
-Verification by the naked eye is difficult; this tool provides:
+Digital payment fraud is a growing concern where users may present **edited or fake payment screenshots**. While this tool was initially developed to address students showing fraudulent screenshots in university cafés, it provides a robust solution for:
 - **OCR** (reads text from the screenshot).  
 - **Duplicate Detection** (prevents using the same screenshot twice).
 - **AI-based layout/classification** (CNN model).  
